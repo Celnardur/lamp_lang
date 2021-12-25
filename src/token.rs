@@ -144,7 +144,6 @@ pub fn first(code: &[char]) -> Result<Token, String> {
         // double literal
         return if length < code.len() && code[length] == '.' {
             length += 1;
-            let floating_start = length;
             iwc!(length, code, code[length].is_ascii_digit());
 
             let token: String = code[..length].iter().collect();
