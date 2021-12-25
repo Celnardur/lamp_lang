@@ -11,7 +11,7 @@ pub enum TokenKind {
     Whitespace(String),
     // literals
     Integer(i128),
-    Float(i128, u64), // code needs to be hashable
+    Float(String), // code needs to be hashable
     Character(char),
     StringLiteral(String),
     // identifier
@@ -139,14 +139,7 @@ pub fn first(code: &[char]) -> Result<Token, String> {
     if code[0].is_ascii_digit() {
         let mut length = 1;
         iwc!(length, code, code[length].is_ascii_digit());
-        let left: String = code[..length].iter().collect();
-        let left = match left.parse() {
-            Ok(number) => number,
-            Err(_) => return Err(format!(
-                    "Scanner Error: Cannot parse \"{}\" as integer",
-                    left
-                )),
-        };
+        let num: String = code[..length].iter().collect();
 
         // double literal
         return if length < code.len() && code[length] == '.' {
@@ -154,16 +147,22 @@ pub fn first(code: &[char]) -> Result<Token, String> {
             let floating_start = length;
             iwc!(length, code, code[length].is_ascii_digit());
 
-            let token: String = code[floating_start..length].iter().collect();
-            match token.parse() {
-                Ok(number) => rt!(Float(left, number), length),
+            let token: String = code[..length].iter().collect();
+            match token.parse::<f64>() {
+                Ok(_) => rt!(Float(token), length),
                 Err(_) => Err(format!(
                     "Scanner Error: Cannot parse \"{}\" as decimal",
                     token
                 )),
             }
         } else {
-            rt!(Integer(left), length)
+            match num.parse() {
+                Ok(number) => rt!(Integer(number), length),
+                Err(_) => return Err(format!(
+                        "Scanner Error: Cannot parse \"{}\" as integer",
+                        num,
+                    )),
+            }
         };
     }
 
@@ -287,7 +286,7 @@ mod tests {
                 Token::new(Whitespace(" ".to_string()), 1, 1),
                 Token::new(Integer(42), 2, 2),
                 Token::new(Whitespace(" ".to_string()), 4, 1),
-                Token::new(Float(3, 1415), 5, 6),
+                Token::new(Float("3.1415".to_string()), 5, 6),
             ]
         );
     }
