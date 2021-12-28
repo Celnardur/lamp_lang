@@ -39,6 +39,14 @@ impl Token {
             kind,
         }
     }
+
+    pub fn is_whitespace(&self) -> bool {
+        match self.kind {
+            Whitespace(_) => true,
+            Comment(_) => true,
+            _ => false,
+        }
+    }
     
     pub fn end(&self) -> usize {
         self.start + self.length
@@ -99,6 +107,11 @@ fn get_char(code: &[char], index: usize, end: char) -> Result<Option<(char, usiz
         }
         None => Err("Reached end of file while parsing string/char".to_string()),
     }
+}
+
+pub fn tokenize_from_str(code: &str) -> Result<Vec<Token>, String> {
+    let code: Vec<char> = code.chars().collect();
+    tokenize(&code)
 }
 
 pub fn tokenize(code: &[char]) -> Result<Vec<Token>, String> {
