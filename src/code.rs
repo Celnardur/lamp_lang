@@ -66,7 +66,6 @@ pub fn parse_fexpr(code: &[Token]) -> Result<(Code, &[Token]), String> {
 //     let mut tokens = &code[1..];
 //     let func = parse_code(code)?;
 
-
 //     Err("Unimplmented".to_string())
 // }
 
@@ -96,9 +95,9 @@ pub fn parse_fexpr(code: &[Token]) -> Result<(Code, &[Token]), String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::token::*;
     use super::Code::*;
     use super::*;
+    use crate::token::*;
 
     #[test]
     fn test_end_code() {

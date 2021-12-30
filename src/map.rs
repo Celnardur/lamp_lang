@@ -89,10 +89,7 @@ mod tests {
         let mut map = Map(HashMap::new());
         map.0.insert('a', 42);
         map.0.insert('c', 56);
-        assert_eq!(
-            map,
-            map![{'a', 42}, {'c', 56}],
-        );
+        assert_eq!(map, map![{'a', 42}, {'c', 56}],);
     }
 
     #[test]
