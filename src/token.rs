@@ -1,3 +1,4 @@
+use crate::queue::Queue;
 use TokenKind::*;
 
 #[derive(PartialEq, Clone, Debug)]
@@ -47,29 +48,44 @@ impl Token {
             _ => false,
         }
     }
-    
+
     pub fn end(&self) -> usize {
         self.start + self.length
     }
 }
 
-macro_rules! rt {
-    ( $kind:expr, $length:expr ) => {
-        Ok(Token {
-            start: 0,
-            length: $length,
-            kind: $kind,
-        })
-    };
-}
-
-// incr while code
-macro_rules! iwc {
-    ($incr:ident, $code:ident, $cond:expr) => {
-        while $incr < $code.len() && ($cond) {
-            $incr += 1;
+impl<'a> Queue<'a, char> {
+    pub fn s_pop_while(&mut self, mut f: impl FnMut(char) -> bool) -> String {
+        let start = self.cursor;
+        while self.cursor < self.data.len() && f(self.data[self.cursor]) {
+            self.cursor += 1;
         }
-    };
+        self.data[start..self.cursor].iter().collect()
+    }
+
+    pub fn range_string(&self, start: usize) -> String {
+        self.data[start..self.cursor].iter().collect()
+    }
+
+    pub fn pop_char(&mut self, end: char) -> Result<Option<char>, String> {
+        Ok(Some(match self.pop() {
+            Some('\\') => match self.pop() {
+                Some('n') => '\n',
+                Some('r') => '\r',
+                Some('t') => '\t',
+                Some(&c) => c,
+                None => return Err("Reached end of file while parsing string/char".to_string()),
+            },
+            Some(&c) => {
+                if c == end {
+                    return Ok(None);
+                } else {
+                    c
+                }
+            }
+            None => return Err("Reached end of file while parsing string/char".to_string()),
+        }))
+    }
 }
 
 // helper function
@@ -89,154 +105,107 @@ fn is_symbol(c: char) -> bool {
         }
 }
 
-fn get_char(code: &[char], index: usize, end: char) -> Result<Option<(char, usize)>, String> {
-    match code.get(index) {
-        Some('\\') => match code.get(index + 1) {
-            Some('n') => Ok(Some(('\n', 2))),
-            Some('r') => Ok(Some(('\r', 2))),
-            Some('t') => Ok(Some(('\t', 2))),
-            Some(&c) => Ok(Some((c, 2))),
-            None => Err("Reached end of file while parsing string/char".to_string()),
-        },
-        Some(&c) => {
-            if c == end {
-                Ok(None)
-            } else {
-                Ok(Some((c, 1)))
-            }
-        }
-        None => Err("Reached end of file while parsing string/char".to_string()),
-    }
-}
-
 pub fn tokenize_from_str(code: &str) -> Result<Vec<Token>, String> {
     let code: Vec<char> = code.chars().collect();
     tokenize(&code)
 }
 
 pub fn tokenize(code: &[char]) -> Result<Vec<Token>, String> {
-    let mut cursor = 0;
+    let mut queue = Queue::new(code);
     let mut tokens = Vec::new();
-    while cursor < code.len() {
-        let mut token = first(&code[cursor..])?;
-        token.start = cursor;
-        cursor += token.length;
-        tokens.push(token);
+    let mut start = 0;
+    while let Some(token) = pop_token(&mut queue)? {
+        tokens.push(Token::new(token, start, queue.cursor - start));
+        start = queue.cursor;
     }
     Ok(tokens)
 }
 
-pub fn first(code: &[char]) -> Result<Token, String> {
-    if code.len() < 1 {
-        return Err("Cannot Scan Empty String".to_string());
-    }
-    // identifiers
-    if code[0].is_alphabetic() {
-        let mut length = 1;
-        iwc!(
-            length,
-            code,
-            code[length].is_alphanumeric() || code[length] == '_'
-        );
-        return rt!(Identifier(code[..length].iter().collect()), length);
+pub fn pop_token(queue: &mut Queue<char>) -> Result<Option<TokenKind>, String> {
+    if queue.empty() {
+        return Ok(None);
     }
 
-    // whitespace
-    if code[0].is_whitespace() {
-        let mut length = 1;
-        iwc!(length, code, code[length].is_whitespace());
-        return rt!(Whitespace(code[..length].iter().collect()), length);
+    if queue.head().is_alphabetic() {
+        return Ok(Some(Identifier(
+            queue.s_pop_while(|c| c.is_alphanumeric() || c == '_'),
+        )));
     }
 
-    // check for number literals
-    if code[0].is_ascii_digit() {
-        let mut length = 1;
-        iwc!(length, code, code[length].is_ascii_digit());
-        let num: String = code[..length].iter().collect();
+    if queue.head().is_whitespace() {
+        return Ok(Some(Whitespace(queue.s_pop_while(|c| c.is_whitespace()))));
+    }
 
-        // double literal
-        return if length < code.len() && code[length] == '.' {
-            length += 1;
-            iwc!(length, code, code[length].is_ascii_digit());
-
-            let token: String = code[..length].iter().collect();
-            match token.parse::<f64>() {
-                Ok(_) => rt!(Float(token), length),
+    if queue.head().is_ascii_digit() {
+        let mut num = queue.s_pop_while(|c| c.is_ascii_digit());
+        return if queue.peak() == Some(&'.') {
+            num.push(*queue.pop().unwrap());
+            num.push_str(&queue.s_pop_while(|c| c.is_ascii_digit()));
+            match num.parse::<f64>() {
+                Ok(_) => Ok(Some(Float(num))),
                 Err(_) => Err(format!(
                     "Scanner Error: Cannot parse \"{}\" as decimal",
-                    token
+                    num
                 )),
             }
         } else {
             match num.parse() {
-                Ok(number) => rt!(Integer(number), length),
-                Err(_) => return Err(format!(
+                Ok(number) => Ok(Some(Integer(number))),
+                Err(_) => {
+                    return Err(format!(
                         "Scanner Error: Cannot parse \"{}\" as integer",
                         num,
-                    )),
+                    ))
+                }
             }
         };
     }
 
-    // symbols and comments
-    match code[0] {
-        '[' => rt!(Lfn, 1),
-        ']' => rt!(Rfn, 1),
-        '{' => rt!(Lcond, 1),
-        '}' => rt!(Rcond, 1),
-        ':' => rt!(FieldDelim, 1),
+    Ok(Some(match *queue.pop().unwrap() {
+        '[' => Lfn,
+        ']' => Rfn,
+        '{' => Lcond,
+        '}' => Rcond,
+        ':' => FieldDelim,
         '#' => {
-            if code.get(1) == Some(&'#') {
-                let mut length = 2;
-                iwc!(length, code, code[length] == '#');
-                iwc!(
-                    length,
-                    code,
-                    !(code[length - 1] == '#' && code[length] == '#')
-                );
-                iwc!(length, code, code[length] == '#');
-                rt!(Comment(code[..length].iter().collect()), length)
+            let start = queue.cursor - 1;
+            if queue.peak() == Some(&'#') {
+                queue.pop_while(|c| *c == '#');
+                queue.pop_until(&['#', '#']);
+                queue.pop_while(|c| *c == '#');
             } else {
-                let mut length = 1;
-                iwc!(length, code, code[length] != '\n');
-                if length >= code.len() {
-                    rt!(Comment(code[..length].iter().collect()), length)
-                } else {
-                    length += 1;
-                    rt!(Comment(code[..length].iter().collect()), length)
-                }
+                queue.pop_until(&['\n']);
+                queue.pop();
             }
+            Comment(queue.range_string(start))
         }
         '"' => {
-            let mut length = 1;
             let mut s = String::new();
-            while let Some((c, l)) = get_char(code, length, '"')? {
-                length += l;
+            while let Some(c) = queue.pop_char('"')? {
                 s.push(c);
             }
-            rt!(StringLiteral(s), length + 1)
+            StringLiteral(s)
         }
         '\'' => {
-            if let Some((c, l)) = get_char(code, 1, '\'')? {
-                match code.get(l + 1) {
-                    Some('\'') => rt!(Character(c), l + 2),
+            if let Some(c) = queue.pop_char('\'')? {
+                match queue.pop() {
+                    Some('\'') => Character(c),
                     Some(_) => {
-                        Err("Character literal must be only one character long".to_string())
+                        return Err("Character litteral can only contain one character".to_string())
                     }
-                    None => Err("Reached end of file while parsing char".to_string()),
+                    None => return Err("Reached end of file while parsing char".to_string()),
                 }
             } else {
-                Err("Character literal must be only one character long".to_string())
+                return Err("Character litteral must contain at least one character".to_string());
             }
         }
         _ => {
-            let mut length = 1;
-            iwc!(length, code, is_symbol(code[length]));
-            rt!(Symbol(code[..length].iter().collect()), length)
+            let start = queue.cursor - 1;
+            queue.pop_while(|&c| is_symbol(c));
+            Symbol(queue.range_string(start))
         }
-    }
+    }))
 }
-
 
 #[cfg(test)]
 mod tests {
