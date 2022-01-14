@@ -5,13 +5,23 @@ use std::hash::Hasher;
 #[derive(Debug, Clone, Eq)]
 pub struct Map<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord>(HashMap<K, V>);
 
+impl<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord> Map<K, V> {
+    pub fn new() -> Map<K, V> {
+        Map(HashMap::new())
+    }
+
+    pub fn insert(&mut self, k: K, v: V) -> Option<V> {
+        self.0.insert(k, v)
+    }
+}
+
 #[macro_export]
 macro_rules! map {
     ( $( { $k:expr, $v:expr } ),* $(,)? ) => {
         {
-            let mut temp_map = Map(HashMap::new());
+            let mut temp_map = Map::new();
             $(
-                temp_map.0.insert($k, $v);
+                temp_map.insert($k, $v);
             )*
             temp_map
         }
@@ -68,17 +78,17 @@ mod tests {
     #[test]
     fn test_map_eq() {
         let mut map = Map(HashMap::new());
-        map.0.insert('a', 42);
-        map.0.insert('c', 56);
+        map.insert('a', 42);
+        map.insert('c', 56);
 
         let mut eq = Map(HashMap::new());
-        eq.0.insert('c', 56);
-        eq.0.insert('a', 42);
+        eq.insert('c', 56);
+        eq.insert('a', 42);
 
         let mut diff = Map(HashMap::new());
-        diff.0.insert('c', 56);
-        diff.0.insert('a', 42);
-        diff.0.insert('j', 79);
+        diff.insert('c', 56);
+        diff.insert('a', 42);
+        diff.insert('j', 79);
 
         assert_eq!(map, eq);
         assert_ne!(map, diff);
@@ -87,8 +97,8 @@ mod tests {
     #[test]
     fn test_constructor_macro() {
         let mut map = Map(HashMap::new());
-        map.0.insert('a', 42);
-        map.0.insert('c', 56);
+        map.insert('a', 42);
+        map.insert('c', 56);
         assert_eq!(map, map![{'a', 42}, {'c', 56}],);
     }
 
