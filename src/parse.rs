@@ -1,4 +1,3 @@
-use crate::map;
 use crate::map::Map;
 use crate::token::TokenKind as Tk;
 use crate::{code::Code, queue::Queue, token::Token};
@@ -67,7 +66,7 @@ impl<'a> Queue<'a, Token> {
     }
 
     pub fn pop_map(&mut self) -> Result<Code, String> {
-        let mut parsed: Map<Code, Code> = map![];
+        let mut parsed: Map<Code, Code> = Map::new();
         let eof_str = String::from("Reached end of file while parsing map");
 
         let cop = self.pop_code()?.ok_or(eof_str.clone())?;
@@ -188,7 +187,7 @@ mod tests {
     fn test_map_cond() {
         assert_eq!(
             Code::from_str("{if c: [equal msg \"hello\"] do: [print \"world\"]}").unwrap()[0],
-            Map(map![
+            Code::Map(map![
                 {Identifier("head_position_field".to_string()), Identifier("if".to_string())},
                 {Identifier("c".to_string()), List(vec![
                     Identifier("equal".to_string()),

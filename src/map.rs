@@ -3,7 +3,7 @@ use std::hash::Hash;
 use std::hash::Hasher;
 
 #[derive(Debug, Clone, Eq)]
-pub struct Map<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord>(HashMap<K, V>);
+pub struct Map<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord>(pub HashMap<K, V>);
 
 impl<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord> Map<K, V> {
     pub fn new() -> Map<K, V> {
