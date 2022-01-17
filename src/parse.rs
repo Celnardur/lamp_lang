@@ -36,7 +36,7 @@ impl<'a> Queue<'a, Token> {
                 return self.pop_code();
             }
             Tk::Integer(num) => Code::Integer(*num),
-            Tk::Float(num) => Code::Float(num.clone()),
+            Tk::Float(num) => Code::Float(*num),
             Tk::Character(c) => Code::Character(*c),
             Tk::StringLiteral(s) => Code::StringLiteral(s.clone()),
             Tk::Identifier(s) => Code::Identifier(s.clone()),
@@ -131,7 +131,7 @@ mod tests {
             Code::from_str("42 3.14 'a' \"hello\" world").unwrap(),
             vec![
                 Integer(42),
-                Float("3.14".to_string()),
+                Float(3.14_f64.to_bits()),
                 Character('a'),
                 StringLiteral("hello".to_string()),
                 Identifier("world".to_string()),
@@ -157,7 +157,7 @@ mod tests {
             vec![List(vec![
                 Identifier("list".to_string()),
                 Integer(42),
-                Float("3.14".to_string()),
+                Float(3.14_f64.to_bits()),
                 Character('a'),
             ])]
         );

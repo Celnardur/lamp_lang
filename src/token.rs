@@ -12,7 +12,7 @@ pub enum TokenKind {
     Whitespace(String),
     // literals
     Integer(i128),
-    Float(String), // code needs to be hashable
+    Float(u64), // code needs to be hashable
     Character(char),
     StringLiteral(String),
     // identifier
@@ -142,7 +142,7 @@ pub fn pop_token(queue: &mut Queue<char>) -> Result<Option<TokenKind>, String> {
             num.push(*queue.pop().unwrap());
             num.push_str(&queue.s_pop_while(|c| c.is_ascii_digit()));
             match num.parse::<f64>() {
-                Ok(_) => Ok(Some(Float(num))),
+                Ok(n) => Ok(Some(Float(n.to_bits()))),
                 Err(_) => Err(format!(
                     "Scanner Error: Cannot parse \"{}\" as decimal",
                     num
@@ -267,7 +267,7 @@ mod tests {
                 Token::new(Whitespace(" ".to_string()), 1, 1),
                 Token::new(Integer(42), 2, 2),
                 Token::new(Whitespace(" ".to_string()), 4, 1),
-                Token::new(Float("3.1415".to_string()), 5, 6),
+                Token::new(Float(3.1415_f64.to_bits()), 5, 6),
             ]
         );
     }

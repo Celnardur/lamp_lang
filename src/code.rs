@@ -5,7 +5,7 @@ use crate::token::tokenize_from_str;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Code {
     Integer(i128),
-    Float(String),
+    Float(u64),
     Character(char),
     StringLiteral(String),
     Identifier(String),
