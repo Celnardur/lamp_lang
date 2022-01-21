@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn test_map() {
         assert_eq!(
-            Code::from_str("{15: 30 2: 4}").unwrap()[0], 
+            Code::from_str("{15: 30 2: 4}").unwrap()[0],
             Code::Map(map![
                 {Integer(15), Integer(30)},
                 {Integer(2), Integer(4)},
