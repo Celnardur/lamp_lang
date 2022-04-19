@@ -17,7 +17,7 @@ fn main() {
             return;
         }
         for expr in code {
-            println!("{}", expr.eval().unwrap().print());
+            println!("{:?}", expr.eval().unwrap());
         }
         input.clear();
     }

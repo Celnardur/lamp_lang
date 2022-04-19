@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::hash::Hasher;
+use std::ops::Deref;
+use std::ops::DerefMut;
 
 #[derive(Debug, Clone, Eq)]
 pub struct Map<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord>(pub HashMap<K, V>);
@@ -8,10 +10,6 @@ pub struct Map<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord>(pub HashMap<K, V>)
 impl<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord> Map<K, V> {
     pub fn new() -> Map<K, V> {
         Map(HashMap::new())
-    }
-
-    pub fn insert(&mut self, k: K, v: V) -> Option<V> {
-        self.0.insert(k, v)
     }
 }
 
@@ -71,6 +69,19 @@ impl<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord> Hash for Map<K, V> {
     }
 }
 
+impl<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord> Deref for Map<K, V> {
+    type Target = HashMap<K, V>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord> DerefMut for Map<K, V> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
