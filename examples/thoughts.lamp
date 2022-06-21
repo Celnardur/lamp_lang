@@ -1,0 +1,54 @@
+#!/usr/bin/lamp_lang
+
+[var factorial {fn r: u32 a: [[n u32]] c: [
+    [var acc 1]
+    {while c: [greater_than n 1] do: [
+        [set acc [multiply acc n]]
+        [set n [plus n -1]]
+    ]}
+    acc
+]}]
+
+###
+Notes: 
+You can have an lfn - list function - and a mfn - map function.
+Mfn function that gets called on a map.
+
+3 levels of types -
+Type: The Exact type of data
+TypeSpec: A minimum requirement for a type
+TypeGroup: A set of possible types - no shared requirements
+
+TypeGroup will be good for polymorphism
+
+levels of functions -
+Function: The actuall function - Takes TypeSpec
+FuncSpec: some requirements for a function - Takes TypeGroup
+FuncGroup: A set of functions callable with same name - Takes Any
+
+FuncGroup is not gaurented to eval to exact function at compile time.
+
+Different evaluation functions
+eval: Traditional evaluation - first arg function ...
+pgm: creates new scope and evaluates each item in list returning last
+namespace: creates new namespace and returns it after evaluating each item
+
+ex. 
+[pgm current_scope args code] 
+where current_namespace is the calling scope and args are
+variables to start the created namespace off with. 
+
+Two types of functions:
+Eval: Each argument is evaluated and returns a value
+Macro: Arguments are passed as code and output code, run before eval
+
+Function You can choose to evaluate function arguments or leave them as code.
+Leaving them as code will be used for conditional evaluation.
+
+
+There should be a break like call that immediatly returns from the
+current namespace. Perhapse one that also immediatly returns 
+from a labeled namespace or one of a certin type?
+###
+
+[var def {fn args:$[a b:u32 c:i32=9 d=10] ret: }
