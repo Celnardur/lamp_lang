@@ -1,4 +1,5 @@
 use std::vec;
+use std::hash::Hash;
 
 use crate::code::Code;
 use crate::lamp_type::LampType;
@@ -109,6 +110,20 @@ impl<T: ToDatum> ToDatum for Option<T> {
             Some(s) => Code::List(vec![Code::Identifier(ts("Some")), s.to_code()]),
             None => Code::List(vec![Code::Identifier(ts("None"))]),
         }
+    }
+}
+
+impl<K: Eq + Hash + Ord + ToDatum, V: PartialEq + Hash + Ord + ToDatum> ToDatum for Map<K, V> {
+    fn to_lamp_type() -> LampType {
+        LampType::Dict(Box::new(K::to_lamp_type()), Box::new(V::to_lamp_type()))
+    }
+
+    fn to_code(&self) -> Code {
+        let mut code = Map::new();
+        for (key, val) in self.iter() {
+            code.insert(key.to_code(), val.to_code());
+        }
+        Code::Map(code)
     }
 }
 

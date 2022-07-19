@@ -1,6 +1,8 @@
+use crate::datum::ToDatum;
 use crate::map::Map;
 use crate::parse;
 use crate::token::tokenize_from_str;
+use crate::lamp_type::LampType;
 use Code::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -40,5 +42,15 @@ impl Code {
 
     pub fn from_float(num: f64) -> Code {
         Code::Float(num.to_bits())
+    }
+}
+
+impl ToDatum for Code {
+    fn to_lamp_type() -> LampType {
+        LampType::Code
+    }
+
+    fn to_code(&self) -> Code {
+        self.clone()
     }
 }

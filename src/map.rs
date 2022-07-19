@@ -82,6 +82,7 @@ impl<K: Eq + Hash + Ord, V: PartialEq + Hash + Ord> DerefMut for Map<K, V> {
         &mut self.0
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
