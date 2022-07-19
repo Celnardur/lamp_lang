@@ -1,8 +1,11 @@
 use std::vec;
 
-use crate::map::*;
 use crate::code::Code;
+use crate::datum::ToDatum;
+use crate::map::*;
 use crate::utils::ts;
+
+use LampType::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum LampType {
@@ -13,14 +16,14 @@ pub enum LampType {
     Char,
 
     List(Vec<LampType>),
-    Vec(Box<LampType>),
+    Vector(Box<LampType>),
     UnTypedList,
 
-    Map(Map<Code,LampType>, Map<Code,LampType>),
+    Maping(Map<Code, (LampType, LampType)>),
     Dict(Box<LampType>, Box<LampType>),
     UnTypedMap,
 
-    Struct(Map<String,LampType>),
+    Struct(Map<String, LampType>),
     Enum(Map<String, Option<LampType>>),
 
     Code,
@@ -28,30 +31,15 @@ pub enum LampType {
     Type,
 }
 
-
-// rust mockup of the function type
-struct Arg {
-    name: String,
-    typ: Option<LampType>,
-    default: Option<Code>,
+impl LampType {
 }
 
-// don't want people to add own runnables or use builtin runnables
-// don't want people to make their own Function types
-enum Runable {
-    BuiltIn(String),
-    Code(Code),
-}
+impl ToDatum for LampType {
+    fn to_lamp_type() -> LampType {
+        LampType::Type
+    }
 
-enum FnReturn {
-    None,
-    Code,
-    Value(LampType),
-}
-
-struct Function {
-    args: Vec<Arg>,
-    eval_args: bool,
-    runable: Runable,
-    returns: FnReturn,
+    fn to_code(&self) -> Code {
+        Code::Integer(0)
+    }
 }
